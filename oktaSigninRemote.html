@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1.0, user-scalable=0">
+    <title></title>
+    <style>
+     
+    </style>
+    <!-- widget stuff here -->
+    
+    <link href="https://global.oktacdn.com/okta-signin-widget/5.5.4/css/okta-sign-in.min.css" type="text/css" rel="stylesheet"/>
+  </head>
+  <body>
+
+    <div class="container">
+      <!-- where the sign-in form will be displayed -->
+      <div id="okta-widget-container"></div>
+    </div>
+
+    <script type="text/javascript">
+    	
+    	var oktaSignIn, oktaAuth, oktaToken;
+    	const INVALID_TOKEN_ERROR_CODE = 'E0000011'; 
+ 		
+ 		// Sign in config
+		var oktaSignInConfig = {
+			features: {
+				rememberMe: false,
+				registration: false,
+				smsRecovery: false,
+				callRecovery: false,
+				emailRecovery: true,
+				hideSignOutLinkInMFA: false,
+				hideBackToSignInForReset: false,
+				webauthn: true,
+				multiOptionalFactorEnroll: true,
+			},
+			logo: 'https://ok10static.oktacdn.com/fs/bco/1/fs0nac4ygYJvwAZot4h5',
+			language: 'en',
+			i18n: {
+				en: {
+					'primaryauth.title': ' ',
+					'primaryauth.submit': 'Login'
+				}
+			},
+			authScheme: 'OAUTH2',
+			helpLinks: {
+				help: 'https://www-dev.canopyhealth.com/en/help.html'
+			}
+		};
+		
+
+    	function initializeWidget(_args) {
+
+    		console.log('[assets/htmls/oktaSignin.html] - initializeWidget() ' + JSON.stringify(_args));
+ 
+ 			// oAuth
+			oktaAuth = new OktaAuth({
+				issuer: _args.issuer,
+				clientId: _args.clientId,
+				redirectUri: _args.redirectUri				
+			});
+
+			// Sign in config
+			oktaSignInConfig.authClient = oktaAuth;
+	        oktaSignInConfig.baseUrl = _args.domain;
+    		if (_args.userEmail) {
+    			oktaSignInConfig.username = _args.userEmail;
+    		}
+    		//oktaSignInConfig.redirectUri = _args.redirectUri || _args.domain;
+			oktaSignIn = new OktaSignIn(oktaSignInConfig);
+
+			/*
+			oktaSignIn.authClient.token.getUserInfo()
+			.then(function(user) {
+	        	Ti.API.info( "Hello, " + user.email + "! You are *still* logged in! :)");
+	        
+	      	})
+	      	.catch(function(error){
+	      		Ti.API.info(JSON.stringify(error));
+	      	});
+			*/
+
+		  	oktaSignIn.renderEl({
+		    	el: '#okta-widget-container'
+		  	})
+		  	.then( function success(res) {
+		    	if (res.status === 'SUCCESS') {
+		    		oktaToken = res.session.token;
+		    		console.log('[assets/htmls/oktaSigninRemote.html] - success()');
+                    oktaSignIn.off();                    
+		    	} else {
+		    		console.log('[assets/htmls/oktaSigninRemote.html] - error(): ' + JSON.stringify(res));
+		    	}
+			    
+			})
+			.catch( function error(res) {
+	    		console.log('[assets/htmls/oktaSigninRemote.html] - error(): ' + JSON.stringify(res));
+			});
+
+			oktaSignIn.on('ready', function() {
+		        console.log('[assets/htmls/oktaSigninRemote.html] - ready()');			        			
+			});			
+			oktaSignIn.on('afterError', function(context, error) {
+				console.log('[assets/htmls/oktaSigninRemote.html] - afterError(): ' + JSON.stringify(error));				
+			});			
+
+    
+		};
+
+    	function logout() {
+    		console.log('[assets/htmls/oktaSignin.html] - logout()');
+    		oktaSignIn.authClient.signOut();
+      	};
+
+		function getOktaToken() {
+			return oktaToken;
+		};      	
+    </script>
+    <script src="https://global.oktacdn.com/okta-signin-widget/5.5.4/js/okta-sign-in.min.js" type="text/javascript"></script>
+   	<script src="https://global.oktacdn.com/okta-auth-js/4.5.0/okta-auth-js.min.js" type="text/javascript"></script>
+  </body>
+</html>
